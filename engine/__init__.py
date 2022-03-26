@@ -44,7 +44,7 @@ def render():
 def start(stage: Stage):
     global STAGE
 
-    # Event.on_triggered = display_event
+    Event.on_triggered = display_event
     Action.on_performed = render
     STAGE = stage
     render()
