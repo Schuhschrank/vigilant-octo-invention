@@ -9,9 +9,9 @@ class Action:
     """
     on_performed = None
 
-    def __init__(self, description, effects: list[Event], auto_disable=False):
+    def __init__(self, description: str, consequences: list[Event], auto_disable=False):
         self.prerequisites: list[Event] = []
-        self.effects: list[Event] = effects
+        self.consequences: list[Event] = consequences
         self.conditions: list[Event] = []
         self.fail_event: Event = Event("Action failed.")
         self.is_enabled = True
@@ -29,7 +29,7 @@ class Action:
     def _succeed(self):
         if self.auto_disable:
             self.is_enabled = False
-        for e in self.effects:
+        for e in self.consequences:
             e.trigger()
         Action.on_performed()
 
