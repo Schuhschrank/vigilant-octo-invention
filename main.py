@@ -1,30 +1,31 @@
 import engine as e
+from engine.state import get_state
 
 # Demo game
 
-# Stage definitions
-at_the_computer = e.Stage("You are sitting at the computer.")
-shelf = e.Stage("You stand before a shelf. There are lots of things on it.")
+get_state().update({
+    "must_poop": True,
+    "pants_down": False,
+    "hunger_level": 1
+})
 
-# Actions and events
-save_progress = e.Action("Save your progress.", auto_disable=True, consequences=[])
-progress_saved = e.Event("Progress saved.")
-save_progress.consequences.append(progress_saved)
+toilet = e.Stage("You are sitting on a toilet.")
+hallway = e.Stage("You are in the hallway.")
 
-turn_off_computer = e.Action("Turn off the computer", auto_disable=True,
-                             consequences=[e.Event("The computer is turned off.")])
-failed_shutdown = e.Event("The computer won't turn off.")
-turn_off_computer.fail_event = failed_shutdown
-turn_off_computer.conditions.append(progress_saved)
+poop = e.Action("Take a dump.", "You took a massive shit. Oh my...",
+                "You cannot poop! You still have your pants up!", auto_disable=True)
+poop.conditions = {"pants_down": True, "must_poop": True}
+poop.consequences = {"pooped": True, "must_poop": False}
 
-went_to_shelf = e.TravelEvent("You went to the shelf.", shelf)
-goto_shelf = e.Action("Go to the shelf behind you.", consequences=[went_to_shelf])
+pants_down = e.Action("Lower your pants.", "Your lowered your pants and can poop now.", auto_disable=True)
+pants_down.consequences = {"pants_down": True}
 
-took_book = e.Event("You took the book. It is in your bag now.")
-take_book = e.Action("There is a book on astrophysics. Take it.", consequences=[took_book], auto_disable=True)
+enter_hallway = e.TravelAction(hallway, "Leave toilet.", "You entered the hallway.")
+enter_hallway.prerequisites = {"pooped": True}
 
-# Bindings of actions to stages
-at_the_computer += [turn_off_computer, save_progress, goto_shelf]
-shelf += [take_book]
+enter_toilet = e.TravelAction(toilet, "Enter toilet.", "You entered the toilet.")
 
-e.start(at_the_computer)
+toilet += [poop, pants_down, enter_hallway]
+hallway += [enter_toilet]
+
+e.start(toilet)

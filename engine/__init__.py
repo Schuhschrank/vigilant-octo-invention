@@ -1,8 +1,7 @@
 from engine.Stage import Stage
-from engine.Event import Event
 from engine.Action import Action
-from engine.TravelEvent import TravelEvent
-from engine.current_stage import *
+from engine.TravelAction import TravelAction
+from engine.staging import set_stage, get_stage
 import tkinter
 
 # STATE: dict = dict()
@@ -29,12 +28,16 @@ events["textvariable"] = events_var
 buttons: list[tkinter.Button] = []
 
 
-def display_event(event: Event):
-    if isinstance(event, TravelEvent):
-        events_var.set("")
-        entry_text_var.set(event.description)
+def process_action(action: Action, was_successful: bool):
+    if was_successful:
+        if isinstance(action, TravelAction):
+            entry_text_var.set(action.success_text)
+            events_var.set("")
+        else:
+            events_var.set(events_var.get() + action.success_text + "\n")
     else:
-        events_var.set(events_var.get() + event.description + "\n")
+        events_var.set(events_var.get() + action.failure_text + "\n")
+    render()
 
 
 def render():
@@ -53,8 +56,7 @@ def render():
 
 
 def start(initial_stage: Stage):
-    Event.on_triggered = display_event
-    Action.on_performed = render
+    Action.on_performed = process_action
     set_stage(initial_stage)
     render()
     root.mainloop()
