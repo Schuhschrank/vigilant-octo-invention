@@ -18,16 +18,16 @@ class Action:
             failure_text: str = "",
             auto_disable: bool = False,
             is_enabled: bool = True,
-            consequences: Optional[dict] = None,
-            conditions: Optional[dict] = None,
-            prerequisites: Optional[dict] = None
+            consequences=None,
+            conditions=None,
+            prerequisites=None
     ):
         self.description = description
         self.success_text = success_text
         self.failure_text = failure_text
-        self.prerequisites: dict = prerequisites if prerequisites is not None else {}
-        self.consequences: dict = consequences if consequences is not None else {}
-        self.conditions: dict = conditions if conditions is not None else {}
+        self.prerequisites = prerequisites
+        self.consequences = consequences
+        self.conditions = conditions
         self.auto_disable = auto_disable
         self.is_enabled = is_enabled
 
@@ -37,10 +37,14 @@ class Action:
     def _can_succeed(self) -> bool:
         return check_conditions(self.conditions)
 
+    def on_succeed(self):
+        pass
+
     def _succeed(self):
         if self.auto_disable:
             self.is_enabled = False
         apply_conditions(self.consequences)
+        self.on_succeed()
         Action.on_performed(self, True)
 
     def _fail(self):

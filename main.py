@@ -2,11 +2,11 @@ import engine as e
 
 # Demo game
 
-must_poop = e.add_var(True)
-pants_down = e.add_var(False)
-full = e.add_var(False)
-pooped = e.add_var(False)
-pooped_once = e.add_var(False)
+must_poop = e.Var(True)
+pants_down = e.Var(False)
+full = e.Var(False)
+pooped = e.Var(False)
+pooped_once = e.Var(False)
 
 toilet = e.Stage(
     name="Toilet",
@@ -24,15 +24,15 @@ poop = e.Action(
     description="Take a dump! Do it quickly! My anus is dying!",
     success_text="You took a massive shit. Oh my...",
     failure_text="You cannot poop! You still have your pants up!",
-    conditions={pants_down: True},
-    consequences={pooped: True, must_poop: False, full: False, pooped_once: True},
-    prerequisites={must_poop: True}
+    conditions=[(pants_down, True)],
+    consequences=[(pooped, True), (must_poop, False), (full, False), (pooped_once, True)],
+    prerequisites=[(must_poop, True)]
 )
 pants_down = e.Action(
     description="Lower your pants.",
     success_text="Your lowered your pants and can poop now.",
-    consequences={pants_down: True},
-    prerequisites={pants_down: False}
+    consequences=[(pants_down, True)],
+    prerequisites=[(pants_down, False)]
 )
 fart = e.Action(
     description="Release a fart.",
@@ -42,7 +42,7 @@ enter_hallway = e.TravelAction(
     new_stage=hallway,
     description="Leave toilet.",
     success_text="You entered the hallway.",
-    prerequisites={pooped_once: True}
+    prerequisites=[(pooped_once, True)]
 )
 enter_toilet = e.TravelAction(
     new_stage=toilet,
@@ -58,8 +58,8 @@ eat = e.Action(
     description="Eat a huge burger.",
     success_text="You feel very full now and you must poop again.",
     failure_text="You cannot eat.",
-    conditions={pooped: True, full: False},
-    consequences={must_poop: True, full: True}
+    conditions=[(pooped, True), (full, False)],
+    consequences=[(must_poop, True), (full, True)]
 )
 toilet.add_actions([
     poop,

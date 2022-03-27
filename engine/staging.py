@@ -1,11 +1,13 @@
 from engine.Stage import Stage
-from engine.state import state, key_stage
 from typing import Optional
+
+_stage = None
 
 
 def stage(new_stage: Optional[Stage] = None) -> Optional[Stage]:
     """If an argument is given, it will change the stage, else it returns the current stage."""
+    global _stage
     if new_stage is None:
-        return state[key_stage]
+        return _stage
     else:
-        state[key_stage] = new_stage
+        _stage = new_stage
