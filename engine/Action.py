@@ -1,5 +1,7 @@
+from typing import Callable, Any, Optional
+from collections import defaultdict
+
 from engine.state import check_conditions, apply_conditions
-from typing import Callable, Any
 
 
 class Action:
@@ -9,14 +11,23 @@ class Action:
     """
     on_performed = Callable[[Any, bool], None]
 
-    def __init__(self, description: str, success_text: str, failure_text: str = "",
-                 auto_disable: bool = False, is_enabled: bool = True):
+    def __init__(
+            self,
+            description: str,
+            success_text: str,
+            failure_text: str = "",
+            auto_disable: bool = False,
+            is_enabled: bool = True,
+            consequences: Optional[dict] = None,
+            conditions: Optional[dict] = None,
+            prerequisites: Optional[dict] = None
+    ):
         self.description = description
         self.success_text = success_text
         self.failure_text = failure_text
-        self.prerequisites: dict = {}
-        self.consequences: dict = {}
-        self.conditions: dict = {}
+        self.prerequisites: dict = prerequisites if prerequisites is not None else {}
+        self.consequences: dict = consequences if consequences is not None else {}
+        self.conditions: dict = conditions if conditions is not None else {}
         self.auto_disable = auto_disable
         self.is_enabled = is_enabled
 
