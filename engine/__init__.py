@@ -10,28 +10,31 @@ root = tkinter.Tk()
 frame = tkinter.Frame(root, padx=256, pady=256)
 frame.grid()
 
-entry_text = tkinter.Label(frame)
-entry_text.grid(column=0, row=0)
-entry_text_var = tkinter.StringVar()
-entry_text["textvariable"] = entry_text_var
 
-stage_text = tkinter.Label(frame)
-stage_text.grid(column=0, row=1)
-stage_var = tkinter.StringVar()
-stage_text["textvariable"] = stage_var
+num_labels = 0
 
-events = tkinter.Label(frame)
-events.grid(column=0, row=2)
-events_var = tkinter.StringVar()
-events["textvariable"] = events_var
 
+def add_label() -> tkinter.StringVar:
+    global num_labels
+    label = tkinter.Label(frame)
+    label.grid(column=0, row=num_labels)
+    num_labels += 1
+    string_var = tkinter.StringVar()
+    label["textvariable"] = string_var
+    return string_var
+
+
+title_text = add_label()
+entry_text = add_label()
+stage_var = add_label()
+events_var = add_label()
 buttons: list[tkinter.Button] = []
 
 
 def process_action(action: Action, was_successful: bool):
     if was_successful:
         if isinstance(action, TravelAction):
-            entry_text_var.set(action.success_text)
+            entry_text.set(action.success_text)
             events_var.set("")
         else:
             events_var.set(events_var.get() + action.success_text + "\n")
@@ -43,6 +46,7 @@ def process_action(action: Action, was_successful: bool):
 def render():
     global buttons
 
+    title_text.set(get_stage().name)
     stage_var.set(get_stage().description)
 
     for b in buttons:
@@ -51,7 +55,7 @@ def render():
     actions = get_stage().get_performable_actions()
     for a, i in zip(actions, range(len(actions))):
         button = tkinter.Button(frame, text=a.description, command=a.attempt)
-        button.grid(column=0, row=i+3)
+        button.grid(column=0, row=i+num_labels)
         buttons.append(button)
 
 

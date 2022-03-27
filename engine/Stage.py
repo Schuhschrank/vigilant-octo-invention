@@ -2,9 +2,10 @@ from engine.Action import Action
 
 
 class Stage:
-    """A state with description in which only a certain set of actions can be performed."""
+    """A state in which only a certain set of actions can be performed."""
 
-    def __init__(self, description: str):
+    def __init__(self, name: str, description: str):
+        self.name: str = name
         self.description: str = description
         self.actions: list[Action] = []
 
