@@ -2,7 +2,7 @@ import engine as e
 
 # Demo game
 
-e.settings.image_folder_path = "./images/"
+e.settings.image_folder_path = "images/"
 
 must_poop, are_pants_down, is_full, has_pooped = e.new_variables(True, False, False, False)
 has_pooped_once = e.new_variable(False)
