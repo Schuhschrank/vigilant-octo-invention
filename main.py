@@ -2,78 +2,79 @@ import engine as e
 
 # Demo game
 
-must_poop = e.Var(True)
-pants_down = e.Var(False)
-full = e.Var(False)
-pooped = e.Var(False)
-pooped_once = e.Var(False)
+e.settings.image_folder_path = "./images/"
+
+must_poop, are_pants_down, is_full, has_pooped = e.new_variables(True, False, False, False)
+has_pooped_once = e.new_variable(False)
 
 toilet = e.Stage(
     name="Toilet",
-    description="You are sitting on a toilet."
+    description="You are sitting on the toilet."
+)
+toilet_paper = e.Prop("You see a role of toilet paper next to you.")
+destroy_toilet_paper = e.Action(
+    "Beam the toilet paper away with your mind.",
+    "The toilet paper disappeared.",
+    consequences=[
+        (toilet_paper, "There is a stain beneath where the toilet paper was.")
+    ],
+    auto_disable=True
 )
 hallway = e.Stage(
     name="Hallway",
-    description="You are in the hallway."
+    description="You are in the hallway.",
+    image_name="default_image.png"
 )
+hallway.set_image("default_image.png")
 living_room = e.Stage(
     name="Living room",
     description="You are in the living room."
 )
 poop = e.Action(
-    description="Take a dump! Do it quickly! My anus is dying!",
+    description="Take a dump.",
     success_text="You took a massive shit. Oh my...",
-    failure_text="You cannot poop! You still have your pants up!",
-    conditions=[(pants_down, True)],
-    consequences=[(pooped, True), (must_poop, False), (full, False), (pooped_once, True)],
-    prerequisites=[(must_poop, True)]
+    failure_text="You cannot poop! You still have your pants up.",
+    condition=lambda: are_pants_down.value,
+    consequences=[
+        (has_pooped, True), (must_poop, False), (is_full, False), (has_pooped_once, True)
+    ],
+    prerequisites=lambda: must_poop.value
 )
 pants_down = e.Action(
     description="Lower your pants.",
     success_text="Your lowered your pants and can poop now.",
-    consequences=[(pants_down, True)],
-    prerequisites=[(pants_down, False)]
+    consequences=[(are_pants_down, True)],
+    prerequisites=lambda: not are_pants_down.value
 )
 fart = e.Action(
     description="Release a fart.",
     success_text="Your fart stinks."
 )
-enter_hallway = e.TravelAction(
-    new_stage=hallway,
-    description="Leave toilet.",
-    success_text="You entered the hallway.",
-    prerequisites=[(pooped_once, True)]
-)
-enter_toilet = e.TravelAction(
-    new_stage=toilet,
-    description="Enter toilet.",
-    success_text="You entered the toilet."
-)
-enter_living_room = e.TravelAction(
-    new_stage=living_room,
-    description="Enter living room.",
-    success_text="You entered the living room."
-)
+enter_hallway = e.TravelAction(new_stage=hallway, prerequisites=lambda: has_pooped_once.value)
+enter_toilet = e.TravelAction(new_stage=toilet)
+enter_living_room = e.TravelAction(new_stage=living_room)
 eat = e.Action(
     description="Eat a huge burger.",
     success_text="You feel very full now and you must poop again.",
-    failure_text="You cannot eat.",
-    conditions=[(pooped, True), (full, False)],
-    consequences=[(must_poop, True), (full, True)]
+    failure_text="You cannot eat, you are full.",
+    condition=lambda: has_pooped.value and not is_full.value,
+    consequences=[(must_poop, True), (is_full, True)]
 )
 toilet.add_actions([
     poop,
     pants_down,
+    destroy_toilet_paper,
     enter_hallway
 ])
+toilet.actors = [toilet_paper]
 hallway.add_actions([
-    enter_toilet,
     eat,
-    enter_living_room
+    enter_living_room,
+    enter_toilet,
 ])
 living_room.add_actions([
     fart,
     enter_hallway
 ])
 
-e.start(toilet)
+e.start(toilet, "My game")

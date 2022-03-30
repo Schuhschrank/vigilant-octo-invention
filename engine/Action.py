@@ -1,58 +1,73 @@
-from typing import Callable, Any, Optional
-from collections import defaultdict
+def _apply_consequences(consequences):
+    """Apply the given consequences."""
 
-from engine.state import check_conditions, apply_conditions
+    if consequences is None:
+        return
+    for variable, value in consequences:
+        if hasattr(variable, "description"):
+            variable.description = value
+        else:
+            variable.value = value
 
 
 class Action:
-    """
-    An action can be performed if it is enabled and all the prerequisite events have been triggered.
-    Once an action is performed all the effects which are events will be triggered.
-    """
-    on_performed = Callable[[Any, bool], None]
+    """An action changes the state of the game.
 
-    def __init__(
-            self,
-            description: str,
-            success_text: str,
-            failure_text: str = "",
-            auto_disable: bool = False,
-            is_enabled: bool = True,
-            consequences=None,
-            conditions=None,
-            prerequisites=None
-    ):
+    An action can be attempted if it is enabled and all the prerequisites are true.
+    An action succeeds if all the conditions are true, then all the statements defined in the
+    consequences will be applied.
+    """
+
+    def __init__(self, description, success_text, failure_text="That didn't work.",
+                 auto_disable=False, is_enabled=True, consequences=None, condition=lambda: True,
+                 prerequisites=lambda: True):
+        """Construct and return an action.
+
+        :param description: Describes to the player what the action is.
+        :param success_text: Displayed if the action is performed successfully.
+        :param failure_text: Displayed if the action is failed to perform.
+        :param auto_disable: Should the action be hidden after first success?
+        :param is_enabled: Should the action be shown and possible to succeed?
+        :param consequences: A list that defines the consequences of a successful attempt. Either
+         use a tuple of a Var and a value (Var(), False) or a Prop and a string (Prop(), "").
+        :param condition: A list of conditions that must be true in order for an attempt to succeed.
+         Defined as tuples like the first described for consequences.
+        :param prerequisites: A list of conditions that must be true in order for the action to be
+        shown to the player. Defined the same as conditions.
+        """
+
         self.description = description
         self.success_text = success_text
         self.failure_text = failure_text
         self.prerequisites = prerequisites
         self.consequences = consequences
-        self.conditions = conditions
+        self.conditions = condition
         self.auto_disable = auto_disable
         self.is_enabled = is_enabled
 
     def can_attempt(self) -> bool:
-        return self.is_enabled and check_conditions(self.prerequisites)
+        """Return whether an action can be attempted; will be hidden if not."""
 
-    def _can_succeed(self) -> bool:
-        return check_conditions(self.conditions)
+        return self.is_enabled and self.prerequisites()
 
     def on_succeed(self):
+        """Process a successful attempt. Override this for any behaviour."""
+
         pass
 
-    def _succeed(self):
-        if self.auto_disable:
-            self.is_enabled = False
-        apply_conditions(self.consequences)
-        self.on_succeed()
-        Action.on_performed(self, True)
+    def attempt(self) -> bool:
+        """
+        Attempt to perform this action.
 
-    def _fail(self):
-        # self.fail_event.trigger()
-        Action.on_performed(self, False)
+        If the conditions are met the consequences will be applied, this action disabled if
+        appropriate and on_succeed() called.
+        :return: Whether the attempt was successful.
+        """
 
-    def attempt(self):
-        if self._can_succeed():
-            self._succeed()
-        else:
-            self._fail()
+        assert self.can_attempt()
+        if self.conditions():
+            self.is_enabled = not self.auto_disable
+            _apply_consequences(self.consequences)
+            self.on_succeed()
+            return True
+        return False
