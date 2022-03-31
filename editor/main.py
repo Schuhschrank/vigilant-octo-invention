@@ -32,6 +32,13 @@ class Form:
                 string_var = tk.StringVar(value=value)
                 self.entries[key] = string_var
                 ttk.Entry(self.frame, textvariable=string_var).pack(fill="x")
+            elif isinstance(value, bool):
+                label = ttk.Label(self.frame, text=key)
+                label.pack(anchor="w")
+                bool_var = tk.BooleanVar(value=value)
+                self.entries[key] = bool_var
+                rb = ttk.Checkbutton(self.frame, variable=bool_var)
+                rb.pack(fill="x")
         ttk.Button(self.frame, text="Save object", command=self.save).pack()
         Form.instances[self.type] = self
 
