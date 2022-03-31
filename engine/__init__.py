@@ -1,6 +1,10 @@
 from engine.framework import *
-from engine.GUI import start as _start_gui
+from engine.GUI import init as _start_gui, start_gui
 import engine.settings
+
+
+def init():
+    _start_gui("My game")
 
 
 class Var:
@@ -33,4 +37,5 @@ def start(initial_stage: Stage, game_name="My game"):
     """
 
     stage(initial_stage)
-    _start_gui(game_name)
+    # _start_gui(game_name)
+    start_gui()

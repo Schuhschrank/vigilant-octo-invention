@@ -71,3 +71,6 @@ class Action:
             self.on_succeed()
             return True
         return False
+
+    def __repr__(self):
+        return f"{self.description}"

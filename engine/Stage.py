@@ -23,7 +23,7 @@ class Stage:
         """
 
         self.name: str = name
-        self._description: str = description
+        self.internal_description: str = description
         self.image = PhotoImage(file=image_folder_path + image_name) if image_name else None
         self.actions: list[Action] = []
         self.actors = None
@@ -36,7 +36,7 @@ class Stage:
         room."
         """
 
-        texts = [self._description]
+        texts = [self.internal_description]
         if self.actors is not None:
             texts.extend([str(a) for a in self.actors])
         return " ".join(texts)
@@ -54,6 +54,9 @@ class Stage:
         """Add actions to this stage."""
 
         self.actions.extend(additional_actions)
+
+    def __repr__(self):
+        return f"{self.name} | {self.internal_description[:32]}"
 
 
 _stage = None
