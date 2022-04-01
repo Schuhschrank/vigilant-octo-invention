@@ -1,6 +1,7 @@
 from tkinter import PhotoImage
 
 from engine.Action import Action
+from engine.Prop import Prop
 from engine.settings import image_folder_path
 
 from typing import Optional
@@ -26,7 +27,7 @@ class Stage:
         self.internal_description: str = description
         self.image = PhotoImage(file=image_folder_path + image_name) if image_name else None
         self.actions: list[Action] = []
-        self.actors = None
+        self.props: list[Prop] = []
 
     @property
     def description(self):
@@ -37,8 +38,8 @@ class Stage:
         """
 
         texts = [self.internal_description]
-        if self.actors is not None:
-            texts.extend([str(a) for a in self.actors])
+        if self.props is not None:
+            texts.extend([str(a) for a in self.props])
         return " ".join(texts)
 
     def set_image(self, file_name: str):
@@ -55,8 +56,8 @@ class Stage:
 
         self.actions.extend(additional_actions)
 
-    def __repr__(self):
-        return f"{self.name} | {self.internal_description[:32]}"
+    def __str__(self):
+        return f"{self.name}: {self.internal_description[:32]}"
 
 
 _stage = None

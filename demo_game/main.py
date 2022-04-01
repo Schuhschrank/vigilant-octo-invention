@@ -68,7 +68,7 @@ toilet.add_actions([
     destroy_toilet_paper,
     enter_hallway
 ])
-toilet.actors = [toilet_paper]
+toilet.props = [toilet_paper]
 hallway.add_actions([
     eat,
     enter_living_room,

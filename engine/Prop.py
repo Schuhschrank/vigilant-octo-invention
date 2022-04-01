@@ -4,4 +4,4 @@ class Prop:
         self.description = description
 
     def __str__(self):
-        return self.description
+        return f"{self.description}"

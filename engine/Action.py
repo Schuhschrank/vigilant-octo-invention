@@ -72,5 +72,5 @@ class Action:
             return True
         return False
 
-    def __repr__(self):
+    def __str__(self):
         return f"{self.description}"
