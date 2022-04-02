@@ -300,4 +300,24 @@ stage_form = Form(e.Stage)
 action_form = Form(e.Action)
 prop_form = Form(e.Prop)
 
+file = open("save")
+lines = file.readlines()
+
+num_props = int(lines[0])
+for line in lines[1:num_props+1]:
+    prop = obj_man.new(e.Prop)
+    prop.description = line.rstrip()
+    obj_man.update(prop)
+
+file.close()
+
 root.mainloop()
+
+file = open("save", "w")
+
+props: list[e.Prop] = obj_man.get(e.Prop)
+file.write(f"{len(props)}\n")
+for p in props:
+    file.write(f"{p.description}\n")
+
+file.close()
