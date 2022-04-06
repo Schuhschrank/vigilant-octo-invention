@@ -1,8 +1,9 @@
 import engine as e
 
 # Fantasy little game
+import engine.Var
 
-has_picked_up_stick = e.new_variable(False)
+has_picked_up_stick = engine.Var.new_variable(False)
 
 game_over = e.Stage(
     name="Game over",

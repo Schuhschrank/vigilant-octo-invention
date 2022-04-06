@@ -1,13 +1,17 @@
 import engine as e
 
 # Demo game
+import engine.Var as Vars
 
 e.init()
 
 e.settings.image_folder_path = "images/"
 
-must_poop, are_pants_down, is_full, has_pooped = e.new_variables(True, False, False, False)
-has_pooped_once = e.new_variable(False)
+must_poop = Vars.new_variable(True)
+are_pants_down = Vars.new_variable(False)
+is_full = Vars.new_variable(False)
+has_pooped = Vars.new_variable(False)
+has_pooped_once = Vars.new_variable(False)
 
 toilet = e.Stage(
     name="Toilet",

@@ -45,7 +45,7 @@ class Stage:
     def set_image(self, file_name: str):
         """Set the stage's image that is displayed to the player.
 
-        Searches the "images" folder in the directory of your main file (e.g. "main.py").
+        Searches the "images" folder in the directory of your main file (e.g. "utils.py").
         :param file_name: Name of the file that is the desired image (e.g. "default_image.png")
         """
 

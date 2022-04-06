@@ -77,7 +77,7 @@ def init(window_title: str):
             b.destroy()
         buttons = []
         actions = stage().actions
-        for a, i in zip(actions, range(len(actions))):
+        for a in actions:
             if a.can_attempt():
                 proxy = ActionProxy(a)
                 button = ttk.Button(buttons_frame, text=a.description, command=proxy.attempt,

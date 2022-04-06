@@ -1,13 +1,24 @@
-def _apply_consequences(consequences):
+from typing import Optional
+
+from engine.Statement import Statement
+
+
+def _apply_consequences(consequences: Optional[list[Statement]]):
     """Apply the given consequences."""
 
-    if consequences is None:
+    if consequences is None or len(consequences) < 1:
         return
-    for variable, value in consequences:
-        if hasattr(variable, "description"):
-            variable.description = value
-        else:
-            variable.value = value
+    for s in consequences:
+        s.make_true()
+
+
+def _check_conditions(conditions: Optional[list[Statement]]) -> bool:
+    if conditions is None or len(conditions) < 1:
+        return True
+    for s in conditions:
+        if not s.is_true():
+            return False
+    return True
 
 
 class Action:
@@ -19,8 +30,9 @@ class Action:
     """
 
     def __init__(self, description, success_text, failure_text="That didn't work.",
-                 auto_disable=False, is_enabled=True, consequences=None, condition=lambda: True,
-                 prerequisites=lambda: True):
+                 auto_disable=False, is_enabled=True,
+                 consequences: Optional[list[Statement]] = None,
+                 condition: Optional[list[Statement]] = None, prerequisites=lambda: True):
         """Construct and return an action.
 
         :param description: Describes to the player what the action is.
@@ -65,7 +77,7 @@ class Action:
         """
 
         assert self.can_attempt()
-        if self.conditions():
+        if _check_conditions(self.conditions):
             self.is_enabled = not self.auto_disable
             _apply_consequences(self.consequences)
             self.on_succeed()
