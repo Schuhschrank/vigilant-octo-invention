@@ -1,10 +1,12 @@
+from typing import Optional, Any
+
 from engine.Var import Var
 
 
 class Statement:
 
-    def __init__(self, variable: Var, value):
-        self.value = value
+    def __init__(self, variable: Optional[Var] = None, value=None):
+        self.value: Any = value
         self.variable: Var = variable
 
     def __bool__(self):

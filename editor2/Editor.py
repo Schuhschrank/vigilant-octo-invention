@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Optional, Any, Callable
+from typing import Optional, Any
 
 import tkinter as tk
 from tkinter import ttk
@@ -10,6 +10,24 @@ import engine as e
 def default_object(t: type):
     """
     Construct an object of the given type using "default" arguments.
+    """
+
+    if issubclass(t, e.Stage):
+        return e.Stage("Empty room", "This is an empty room.")
+    elif issubclass(t, e.Action):
+        return e.Action("Do nothing.", "You successfully did nothing.")
+    elif issubclass(t, e.Prop):
+        return e.Prop("There is a thing.")
+    elif issubclass(t, e.Var):
+        return e.Var("A default variable")
+    elif issubclass(t, e.Statement):
+        return e.Statement(None, "True")
+    raise TypeError(f"Cannot construct default object for unknown type {t}.")
+
+
+def model_object(t: type):
+    """
+    For the form
     """
 
     if issubclass(t, e.Stage):
@@ -75,8 +93,8 @@ class Form:
         ttk.Label(self.frame, text=f"Form for {t}").pack()
 
         # For each attribute add an appropriate method of input
-        default_obj = default_object(t)
-        for key, value in default_obj.__dict__.items():
+        model_obj = model_object(t)
+        for key, value in model_obj.__dict__.items():
 
             # Attribute name label
             attr_name = key.replace("_", " ")
@@ -120,7 +138,7 @@ class Form:
 class ObjectManager:
 
     def __init__(self):
-        self.objs_by_type: dict[type, list[object]] = {}
+        self.objs_by_type: dict[type, list[Item]] = {}
 
     def new(self, t: type) -> Item:
         new_obj = Item(default_object(t))
@@ -128,13 +146,13 @@ class ObjectManager:
         return new_obj
 
     def delete(self, obj: Item):
-        pass
+        self.objs_by_type[obj.get_type()].remove(obj)
 
     # def update(self, obj: Item, new_attributes: dict[str, Any]):
     #     obj.write(new_attributes)
 
-    def get(self, t: type):
-        return self.objs_by_type[t]
+    def get(self, t: type) -> list[Item]:
+        return self.objs_by_type.setdefault(t, [])
 
 
 class Editor:
@@ -205,17 +223,19 @@ class ItemList(Subscriber):
         self.items_by_id[identifier] = obj
         self.ids_by_items[obj] = identifier
 
-    def _remove(self, obj_id: str):
+    def _remove(self, obj_id: str) -> Item:
         obj = self.get_item(obj_id)
         obj.unsubscribe(self)
         self.tree.delete(obj_id)
-
         del self.items_by_id[obj_id]
         del self.ids_by_items[obj]
+        return obj
 
     def remove_selection(self):
+        deleted_objs = []
         for selected in self.tree.selection():
-            self._remove(selected)
+            deleted_objs.append(self._remove(selected))
+        return  deleted_objs
 
     def receive(self, other: Item):
         identifier = self.get_id(other)
@@ -259,13 +279,88 @@ class Browser:
 
     def destroy(self):
         self.editor.close()
-        self.item_list.remove_selection()
-        # self.obj_man.delete(obj)
+        deleted_objs = self.item_list.remove_selection()
+        for obj in deleted_objs:
+            self.obj_man.delete(obj)
 
     def create(self, t: type):
         new_obj: Item = self.obj_man.new(t)
         self.item_list.add(new_obj)
         self.editor.open(new_obj)
+        return new_obj
+
+
+def _value(s: str, env: dict[int, object]) -> Any:
+    """
+    Cast string to a value.
+
+    :param s: String to cast (e.g. "'Hello'", '"Banana"', "-1.02", "None", etc.)
+    :param env: Maps ids to objects.
+    :return: Value of what is encoded in the given string.
+    """
+
+    if s == "''" or s == '""':
+        return ""
+    if (s.startswith("'") and s.endswith("'")) or (s.startswith('"') and s.startswith('"')):
+        return s[1:-1]
+    if s.startswith("[") and s.endswith("]"):
+        if s == "[]":
+            return []
+        return [_value(ss, env) for ss in s[1:-1].split(", ")]
+    if s.startswith("<") and s.endswith(">"):
+        if s.startswith("<func"):
+            return lambda: True
+        identity = int(s[s.find(" at ")+4:-1], 16)
+        return env[identity]
+    if s == "None":
+        return None
+    if s == 'True':
+        return True
+    if s == 'False':
+        return False
+    try:
+        number = float(s)
+        if number.is_integer():
+            return int(number)
+        return number
+    except ValueError:
+        return None
+
+
+_seperator = ":"
+
+
+def serialize(obj: object) -> str:
+    """
+    Create a string representing the given object that can be saved to a file.
+
+    :param obj: Object to serialize
+    :return: String from which the object can be recovered.
+    """
+
+    result = f"{len(obj.__dict__)}\n{id(obj)}\n"
+    for key, value in obj.__dict__.items():
+        if isinstance(value, str):
+            value = "'" + value + "'"
+        result += key + _seperator + str(value) + "\n"
+    return result
+
+
+def deserialize_obj(lines: list[str], env: dict[int, object]) -> tuple[dict, int]:
+    """
+    Deserialize a single object.
+
+    :param lines:
+    :param env:
+    :return:
+    """
+
+    identifier = int(lines[0])
+    result = {}
+    for line in lines[1:]:
+        key, _, value = line.partition(_seperator)
+        result[key] = _value(value, env)
+    return result, identifier
 
 
 class App:
@@ -280,19 +375,46 @@ class App:
         frame_editor = ttk.Frame(self.window)
         frame_editor.pack(anchor="nw")
 
+        ttk.Button(self.window, text="Save all", command=self.write).pack(side="right", anchor="ne")
+
         self.obj_man: ObjectManager = ObjectManager()
-        browser = Browser(frame_browser, self.obj_man)
+        self.browser = Browser(frame_browser, self.obj_man)
         self.editor: Editor = Editor(frame_editor, self.obj_man)
-        browser.set_editor(self.editor)
+        self.browser.set_editor(self.editor)
 
     def start(self):
+        self.read()
         self.window.mainloop()
 
     def read(self):
-        pass
+        try:
+            with open("save") as file:
+                env = {}
+                current_line = 0
+                lines = [line.rstrip() for line in file.readlines()]
+                for t in [e.Var, e.Statement, e.Prop, e.Action, e.Stage]:
+                    num_objs = int(lines[current_line])
+                    current_line += 1
+                    for _ in range(num_objs):
+                        num_attr = int(lines[current_line])
+                        begin = current_line + 1
+                        end = begin + num_attr + 1
+                        obj_def, identity = deserialize_obj(lines[begin:end], env)
+                        obj = self.browser.create(t)
+                        obj.write(obj_def)
+                        env[identity] = obj
+                        current_line = end
+                    print(f"Loaded objects of type {t}.")
+        except FileNotFoundError:
+            pass
 
     def write(self):
-        pass
+        with open("save", "w") as file:
+            for obj_type in [e.Var, e.Statement, e.Prop, e.Action, e.Stage]:
+                objs: list[Item] = self.obj_man.get(obj_type)
+                file.write(f"{len(objs)}\n")
+                for obj in objs:
+                    file.write(serialize(obj.read()))
 
     def launch_game(self):
         pass
